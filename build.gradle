@@ -1,0 +1,60 @@
+apply plugin: 'java'
+apply plugin: "com.github.johnrengelman.shadow"
+
+group = pluginGroup
+version = pluginVersion
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileJava.options.encoding = 'UTF-8'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+
+    maven {
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(dir: 'libs/export', include: ['*.jar'])
+    compile(project(':Common')) { transitive = false }
+    compile(project(':WorldEdit_6_1_9')) { transitive = false }
+    compile(project(':WorldEdit_7_0_0_Beta1')) { transitive = false }
+    compile(project(':WorldEdit_7_0_0_Beta5')) { transitive = false }
+    compile(project(':WorldEdit_7_0_0')) { transitive = false }
+}
+// implementation
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        filter ReplaceTokens, tokens: [version: version]
+    }
+}
+
+shadowJar {
+    archiveName = "Investment.jar"
+}
+
+build.dependsOn(shadowJar)

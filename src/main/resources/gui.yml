@@ -1,0 +1,58 @@
+name: "&9Choose your investment"
+size: 54
+items:
+  idle-items:
+    red-glasses:
+      type: RED_STAINED_GLASS_PANE
+      data: 0
+      name: ""
+      amount: 1
+      slots:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 17
+        - 18
+        - 26
+        - 27
+        - 35
+        - 36
+        - 44
+        - 45
+        - 46
+        - 47
+        - 48
+        - 49
+        - 50
+        - 51
+        - 52
+        - 53
+  # The name of the section must be the same as the name of the investment
+  investments-items:
+    investment1:
+      type: NETHER_STAR
+      data: 0
+      name: "&6&l30 minutes"
+      lore:
+        - ""
+        - " &6&l➤ &fInvestment: &b%toInvest%$"
+        - " &6&l➤ &fReward: &b%reward%$"
+        - ""
+        - "&fStay in the area for &b30 minutes"
+        - "&fto get your reward."
+      amount: 1
+      slot: 13
+  other-items:
+    emerald:
+      type: EMERALD
+      data: 0
+      name: "&6&lTime is money !"
+      amount: 1
+      slot: 49

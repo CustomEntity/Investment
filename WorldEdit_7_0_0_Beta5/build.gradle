@@ -1,0 +1,23 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+group 'fr.customentity'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(project(':Common')) { transitive = false }
+    compileOnly fileTree(dir: '../libs', include: ['*.jar'])
+    compileOnly fileTree(dir: '../libs/7.0.0B5', include: ['*.jar'])
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/java']
+}

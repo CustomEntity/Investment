@@ -1,0 +1,12 @@
+name: Investment
+version: 1.4.1
+main: fr.customentity.investment.Investment
+depend: [Vault, WorldEdit]
+softdepend: [ProtocolLib,PlaceholderAPI]
+authors: [CustomEntity]
+description: Time is money
+api-version: 1.14
+commands:
+  investment:
+    aliases: [invest]
+    description: Main command for Investment Plugin.
