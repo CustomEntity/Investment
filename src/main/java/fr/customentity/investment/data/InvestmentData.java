@@ -1,11 +1,9 @@
 package fr.customentity.investment.data;
 
 import fr.customentity.investment.Investment;
-import fr.customentity.investment.utils.Cuboid;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -91,8 +91,10 @@ public class InvestPlayer {
         Tl.sendConfigMessage(player, Tl.ON_INVEST_FINISH, "%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "", "%invested%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "", "%investment%", investmentData.getName());
         Investment.getInstance().getDatabaseSQL().removeInvestment(player);
         Bukkit.getScheduler().runTask(Investment.getInstance(), () -> {
-            for(String commands : Investment.getInstance().getConfig().getStringList("settings.commands-when-player-finish-investment")) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commands.replace("%displayname%", player.getDisplayName()).replace("%reward%", investmentData.getReward() + "").replace("%invested%", investmentData.getToInvest() + "").replace("%investment%", investmentData.getName()).replace("%player%", player.getName()));
+            if(Investment.getInstance().getConfig().contains("settings.commands-when-player-finish-investment")) {
+                for (String commands : Investment.getInstance().getConfig().getStringList("settings.commands-when-player-finish-investment")) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commands.replace("%displayname%", player.getDisplayName()).replace("%reward%", investmentData.getReward() + "").replace("%invested%", investmentData.getToInvest() + "").replace("%investment%", investmentData.getName()).replace("%player%", player.getName()));
+                }
             }
         });
         this.investmentData = null;

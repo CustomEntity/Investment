@@ -1,5 +1,5 @@
 name: Investment
-version: 1.4.1
+version: 1.4.2
 main: fr.customentity.investment.Investment
 depend: [Vault, WorldEdit]
 softdepend: [ProtocolLib,PlaceholderAPI]

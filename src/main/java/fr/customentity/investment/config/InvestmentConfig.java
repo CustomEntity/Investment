@@ -2,16 +2,11 @@ package fr.customentity.investment.config;
 
 import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestmentData;
-import fr.customentity.investment.utils.Cuboid;
-import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
 
 public class InvestmentConfig {
 
