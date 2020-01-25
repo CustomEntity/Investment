@@ -44,6 +44,7 @@ items:
         - ""
         - " &6&l➤ &fInvestment: &b%toInvest%$"
         - " &6&l➤ &fReward: &b%reward%$"
+        - " &6&l➤ &fReward Type: &b%type%"
         - ""
         - "&fStay in the area for &b30 minutes"
         - "&fto get your reward."

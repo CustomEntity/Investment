@@ -3,6 +3,9 @@ package fr.customentity.investment.sql;
 import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestPlayer;
 import fr.customentity.investment.data.InvestmentData;
+import fr.customentity.investment.exceptions.WorldDoesntExistException;
+import fr.customentity.investment.utils.SerializationUtils;
+import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,23 +30,51 @@ public class Database {
         }
     }
 
-    public void createTable(String table) {
+    private void createTable(String table) {
         String tableps = "create table IF NOT EXISTS " + table + " (" + "uuid varchar(255),"
                 + "investment varchar(255),"
                 + "timeStayed int(11),"
                 + "timeStayedToday int(11)"
                 + ")";
-        String column = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS timeStayedToday int(11) DEFAULT 0";
+        String timeStayedColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS timeStayedToday int(11) DEFAULT 0";
+        String lastLocationColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS lastLocation varchar(255) DEFAULT none";
 
         Statement stmt = null;
         try {
             stmt = getConnection().createStatement();
             stmt.execute(tableps);
-            stmt.execute(column);
+            stmt.execute(timeStayedColumn);
+            stmt.execute(lastLocationColumn);
             stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setLastLocation(Player player) {
+        try {
+            PreparedStatement ps = getConnection().prepareStatement("UPDATE " + this.table + " SET lastLocation = ? WHERE " + player.getName());
+            ps.setString(1, SerializationUtils.serializeLocation(player.getLocation()));
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Location getLastLocation(Player player) {
+        Location location = null;
+        try {
+            PreparedStatement ps = getConnection().prepareStatement("SELECT lastLocation FROM " + this.table + " WHERE " + player.getName());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                location = SerializationUtils.deserializeLocation(rs.getString("lastLocation"));
+            }
+            ps.close();
+        } catch (SQLException | WorldDoesntExistException e) {
+            e.printStackTrace();
+        }
+        return location;
     }
 
     public void resetTimeStayedToday() {
@@ -62,8 +93,8 @@ public class Database {
             PreparedStatement ps = getConnection().prepareStatement("SELECT investment FROM " + table + " WHERE uuid = ?");
             ps.setString(1, player.getUniqueId().toString());
             ResultSet rs = ps.executeQuery();
-            if(rs.next()) {
-                if(!rs.getString("investment").isEmpty()) {
+            if (rs.next()) {
+                if (!rs.getString("investment").isEmpty()) {
                     hasInvestment = true;
                 }
             }
@@ -148,16 +179,18 @@ public class Database {
                 ResultSet resultSet = ps.executeQuery();
                 if (resultSet.next()) {
                     InvestmentData investmentData = InvestmentData.getInvestmentDataByName(resultSet.getString("investment"));
+
                     if (investmentData != null) {
                         investPlayer.setInvestmentData(investmentData);
                         investPlayer.setTimeStayed(resultSet.getInt("timeStayed"));
                         investPlayer.setTimeStayedToday(resultSet.getInt("timeStayedToday"));
+                        investPlayer.setOriginalLocation(SerializationUtils.deserializeLocation(resultSet.getString("lastLocation")));
                     } else {
                         removeInvestment(player);
                     }
                 }
                 ps.close();
-            } catch (SQLException e) {
+            } catch (SQLException | WorldDoesntExistException e) {
                 e.printStackTrace();
             }
         }

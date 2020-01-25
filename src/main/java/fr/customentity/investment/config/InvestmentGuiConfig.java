@@ -2,7 +2,7 @@ package fr.customentity.investment.config;
 
 import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestmentData;
-import fr.customentity.investment.utils.MoneyFormat;
+import fr.customentity.investment.utils.CurrencyFormat;
 import fr.customentity.investment.utils.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-/**
- * Created by JSONArray on 08/06/2018 for Duel.
- */
 public class InvestmentGuiConfig {
 
     public FileConfiguration investmentConfig;
@@ -127,9 +124,9 @@ public class InvestmentGuiConfig {
                 boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
                 ItemStack it = getItemConfig("items.investments-items." + investments);
                 ItemMeta im = it.getItemMeta();
-                im.setDisplayName(im.getDisplayName().replace("%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + ""));
+                im.setDisplayName(im.getDisplayName().replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + ""));
                 List<String> translatedLore = new ArrayList<>();
-                im.getLore().forEach(s -> translatedLore.add(s.replace("%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "")));
+                im.getLore().forEach(s -> translatedLore.add(s.replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "")));
                 im.setLore(translatedLore);
                 it.setItemMeta(im);
                 inventory.setItem(get().getInt("items.investments-items." + investments + ".slot"), it);

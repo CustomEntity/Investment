@@ -286,7 +286,7 @@ public class Metrics {
                             } catch (ClassNotFoundException e) {
                                 // minecraft version 1.14+
                                 if (logFailedRequests) {
-                                    this.plugin.getLogger().log(Level.SEVERE, "Encountered unexpected exception", e);
+                                    this.plugin.getLogger().log(Level.SEVERE, "Encountered unexpected exceptions", e);
                                 }
                                 continue; // continue looping since we cannot do any other thing.
                             }

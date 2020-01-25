@@ -1,11 +1,11 @@
 name: Investment
-version: 1.4.2
+version: 1.5
 main: fr.customentity.investment.Investment
 depend: [Vault, WorldEdit]
-softdepend: [ProtocolLib,PlaceholderAPI]
+softdepend: [ProtocolLib,PlaceholderAPI,Essentials,AntiAFKPlus]
 authors: [CustomEntity]
 description: Time is money
-api-version: 1.14
+api-version: 1.13
 commands:
   investment:
     aliases: [invest]

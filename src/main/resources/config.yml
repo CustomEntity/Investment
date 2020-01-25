@@ -35,3 +35,14 @@ settings:
     char: "|"
     progress-color: "&a"
     remaining-progress-color: "&7"
+  afk:
+    afk-teleport-location: "world:0:0:0"
+    # Teleport the player to the investment zone
+    # when he becomes AFK.
+    teleport-when-afk: false
+    #Teleports the player to his original location from
+    # when he was teleported to the investment area.
+    teleport-back-location: false
+    # Prevents a player from being kicked when
+    # he becomes afk in the area.
+    anti-kick-player: true

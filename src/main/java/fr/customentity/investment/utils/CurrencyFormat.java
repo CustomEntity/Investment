@@ -7,7 +7,7 @@ import java.util.TreeMap;
 /**
  * Created by CustomEntity on 6/10/2019 for [SpigotMc] Investment.
  */
-public class MoneyFormat {
+public class CurrencyFormat {
     private static final NavigableMap<Long, String> suffixes = new TreeMap<>();
 
     static {

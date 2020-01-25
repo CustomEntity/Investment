@@ -1,9 +1,7 @@
 package fr.customentity.investment.data;
 
 import fr.customentity.investment.Investment;
-import fr.customentity.investment.utils.MoneyFormat;
-import fr.customentity.investment.utils.Tl;
-import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -19,18 +17,27 @@ public class InvestPlayer {
     private InvestmentData investmentData;
     private int timeStayed;
     private int timeStayedToday;
+    private Location originalLocation;
 
     public InvestPlayer(Player player) {
         this.player = player;
         this.timeStayed = 0;
         this.timeStayedToday = 0;
 
-        if(Investment.getInstance().getDatabaseSQL().hasAccount(player)) {
+        if (Investment.getInstance().getDatabaseSQL().hasAccount(player)) {
             Investment.getInstance().getDatabaseSQL().loadData(this);
         } else {
             Investment.getInstance().getDatabaseSQL().createAccount(player);
         }
         investPlayerList.add(this);
+    }
+
+    public Location getOriginalLocation() {
+        return originalLocation;
+    }
+
+    public void setOriginalLocation(Location originalLocation) {
+        this.originalLocation = originalLocation;
     }
 
     public Player getPlayer() {
@@ -58,6 +65,15 @@ public class InvestPlayer {
         investPlayerList.remove(this);
     }
 
+    public void finishCurrentInvestment() {
+        investmentData.finishInvestment(this);
+    }
+
+    public void resetInvestment() {
+        this.setInvestmentData(null);
+        this.setTimeStayed(0);
+    }
+
     public boolean hasInvestment() {
         return investmentData != null;
     }
@@ -69,38 +85,6 @@ public class InvestPlayer {
     public int getTimeStayedToday() {
         return timeStayedToday;
     }
-
-    public void startInvestment(InvestmentData investmentData) {
-        boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
-        if (Investment.getInstance().getEcon().has(player, investmentData.getToInvest())) {
-            Investment.getInstance().getEcon().withdrawPlayer(player, investmentData.getToInvest());
-            setInvestmentData(investmentData);
-            setTimeStayed(0);
-            Tl.sendConfigMessage(player, Tl.ON_INVEST, "%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "", "%invested%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "", "%investment%", investmentData.getName());
-            Investment.getInstance().getDatabaseSQL().setInvestment(player, investmentData);
-        } else {
-
-            Tl.sendConfigMessage(player, Tl.NO_ENOUGH_MONEY, "%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "", "%invested%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "", "%investment%", investmentData.getName());
-        }
-    }
-
-    public void finishInvestment() {
-        InvestmentData currentInvestment = getCurrentInvestment();
-        Investment.getInstance().getEcon().depositPlayer(player, currentInvestment.getReward());
-        boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
-        Tl.sendConfigMessage(player, Tl.ON_INVEST_FINISH, "%reward%", moneyFormat ? MoneyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "", "%invested%", moneyFormat ? MoneyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "", "%investment%", investmentData.getName());
-        Investment.getInstance().getDatabaseSQL().removeInvestment(player);
-        Bukkit.getScheduler().runTask(Investment.getInstance(), () -> {
-            if(Investment.getInstance().getConfig().contains("settings.commands-when-player-finish-investment")) {
-                for (String commands : Investment.getInstance().getConfig().getStringList("settings.commands-when-player-finish-investment")) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commands.replace("%displayname%", player.getDisplayName()).replace("%reward%", investmentData.getReward() + "").replace("%invested%", investmentData.getToInvest() + "").replace("%investment%", investmentData.getName()).replace("%player%", player.getName()));
-                }
-            }
-        });
-        this.investmentData = null;
-        setTimeStayed(0);
-    }
-
 
     public static InvestPlayer wrap(Player player) {
         for (InvestPlayer investPlayer : investPlayerList) {

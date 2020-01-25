@@ -32,7 +32,6 @@ public class TitleUtils {
     }
 
     public static void sendTitle(Player player, Integer fadeIn, Integer stay, Integer fadeOut, String title, String subtitle) {
-
         try {
             Object e;
             Object chatTitle;

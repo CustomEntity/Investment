@@ -33,11 +33,11 @@ public class InvestmentListener implements Listener {
                     InvestmentData investmentData = InvestmentData.getInvestmentDataByName(str);
                     if (investmentData != null) {
                         if (!player.hasPermission("investment.investments." + investmentData.getName()) && !player.hasPermission("investment.investments.*") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*")) {
-                            Tl.sendConfigMessage(player, Tl.NO_PERMISSION_INVESTMENT);
+                            Tl.sendConfigMessage(player, Tl.INVESTMENT_NO$PERMISSION);
                             player.closeInventory();
                             return;
                         }
-                        InvestPlayer.wrap(player).startInvestment(investmentData);
+                        investmentData.startInvestment(InvestPlayer.wrap(player));
                         player.closeInventory();
                     }
                 }

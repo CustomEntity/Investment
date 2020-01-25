@@ -5,27 +5,32 @@ import fr.customentity.investment.config.InvestmentGuiConfig;
 import fr.customentity.investment.config.MessagesConfig;
 import fr.customentity.investment.data.InvestPlayer;
 import fr.customentity.investment.data.InvestmentData;
+import fr.customentity.investment.data.InvestmentType;
+import fr.customentity.investment.exceptions.WorldDoesntExistException;
 import fr.customentity.investment.hook.WorldEditSelection;
 import fr.customentity.investment.hook.all.WorldEdit_6_1_9;
 import fr.customentity.investment.hook.all.WorldEdit_7;
 import fr.customentity.investment.hook.all.WorldEdit_7Beta1;
 import fr.customentity.investment.hook.all.WorldEdit_7Beta5;
+import fr.customentity.investment.hooks.AntiAfkPlusHook;
+import fr.customentity.investment.hooks.EssentialHook;
+import fr.customentity.investment.hooks.Hook;
+import fr.customentity.investment.hooks.HooksManager;
 import fr.customentity.investment.listeners.InvestmentListener;
 import fr.customentity.investment.schedulers.DailyTask;
 import fr.customentity.investment.sql.Database;
 import fr.customentity.investment.utils.*;
-import javafx.scene.control.Pagination;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -48,6 +53,7 @@ public class Investment extends JavaPlugin {
     private WorldEditSelection worldEditSelection;
 
     private List<Player> entered = new ArrayList<>();
+    private HooksManager hooksManager;
 
     @Override
     public void onEnable() {
@@ -72,6 +78,10 @@ public class Investment extends JavaPlugin {
             return;
         }
         getLogger().log(Level.INFO, "WorldEdit found !");
+
+        getLogger().log(Level.INFO, "Checking AntiAfk integration...");
+
+
 
         this.sendPluginEnableMessage();
         Bukkit.getPluginManager().registerEvents(new InvestmentListener(), this);
@@ -98,13 +108,15 @@ public class Investment extends JavaPlugin {
         messagesConfig.setup();
         getLogger().log(Level.INFO, "Setup of the investment messages configuration finished !");
 
-        prefix = ChatColor.translateAlternateColorCodes('&', messagesConfig.get().getString(Tl.PREFIX.toString()));
+        prefix = ChatColor.translateAlternateColorCodes('&', messagesConfig.get().getString(Tl.GENERAL_PREFIX.toString()));
 
         if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib") && Investment.getInstance().getConfig().getBoolean("settings.vanish")) {
             this.vanishManager = new VanishManager(this, VanishManager.Policy.BLACKLIST);
         }
 
-        getLogger().log(Level.INFO, "Setup of the investment messages configuration...");
+        this.hooksManager = new HooksManager();
+        hooksManager.setupHooks();
+
         Metrics metrics = new Metrics(this);
         metrics.addCustomChart(new Metrics.SingleLineChart("total_players_in_investment_zone", () -> entered.size()));
 
@@ -139,7 +151,12 @@ public class Investment extends JavaPlugin {
 
     public Cuboid getInvestmentZone() {
         String investmentZoneConfig = getConfig().getString("settings.investment-zone");
-        return new Cuboid(deserializeLocation(investmentZoneConfig.split(";")[0]), deserializeLocation(investmentZoneConfig.split(";")[1]));
+        try {
+            return new Cuboid(SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[0]), SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[1]));
+        } catch (WorldDoesntExistException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public JavaPlugin getWorldEditPlugin() {
@@ -199,6 +216,7 @@ public class Investment extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.GOLD + "Description: " + ChatColor.WHITE + getDescription().getDescription());
         Bukkit.getConsoleSender().sendMessage(ChatColor.GOLD + "" + ChatColor.STRIKETHROUGH + "------------------------------");
         Bukkit.getConsoleSender().sendMessage(" ");
+
     }
 
     public Database getDatabaseSQL() {
@@ -222,34 +240,26 @@ public class Investment extends JavaPlugin {
 
     private boolean setupWorldEdit() {
         worldEditPlugin = (JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WorldEdit");
+        String version = worldEditPlugin.getDescription().getVersion().split(";")[0];
+        int majorVersion = Integer.parseInt(version.split(".")[0]);
+
         if (worldEditPlugin == null) return false;
-        if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-05")) {
-            worldEditSelection = new WorldEdit_7Beta5(worldEditPlugin);
-        } else if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-01")) {
-            worldEditSelection = new WorldEdit_7Beta1(worldEditPlugin);
-        } else if (worldEditPlugin.getDescription().getVersion().contains("7.0.0")) {
-            worldEditSelection = new WorldEdit_7(worldEditPlugin);
+        if (majorVersion == 7) {
+            if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-05")) {
+                worldEditSelection = new WorldEdit_7Beta5(worldEditPlugin);
+            } else if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-01")) {
+                worldEditSelection = new WorldEdit_7Beta1(worldEditPlugin);
+            } else {
+                worldEditSelection = new WorldEdit_7(worldEditPlugin);
+            }
         } else {
             worldEditSelection = new WorldEdit_6_1_9(worldEditPlugin);
         }
+
+
         return true;
     }
 
-    public Location deserializeLocation(String string) {
-        if (string.equalsIgnoreCase("null")) {
-            return null;
-        }
-        String[] locString = string.split(":");
-        return new Location(Bukkit.getWorld(locString[0]), Double.parseDouble(locString[1]),
-                Double.parseDouble(locString[2]), Double.parseDouble(locString[3]));
-    }
-
-    public String serializeLocation(Location location) {
-        if (location == null) {
-            return "NoLocFound";
-        }
-        return location.getWorld().getName() + ":" + location.getX() + ":" + location.getY() + ":" + location.getZ();
-    }
 
     private boolean isNumber(String str) {
         try {
@@ -280,18 +290,18 @@ public class Investment extends JavaPlugin {
                 }
             }
             if (!entered.contains(player)) {
-                Tl.sendConfigMessage(player, Tl.ON_ENTER_INVESTMENT);
+                Tl.sendConfigMessage(player, Tl.INVESTMENT_ON$ENTER$ZONE);
                 entered.add(player);
             }
             if (getPlayersWithSameIp(player) > getConfig().getInt("settings.max-account-with-same-ip-in-investment", 3)) {
-                Tl.sendConfigMessage(player, Tl.MAXACCOUNTREACHED);
+                Tl.sendConfigMessage(player, Tl.INVESTMENT_MAX$ACCOUNT$REACHED);
                 return;
             }
             if (investPlayer.hasInvestment()) {
                 InvestmentData investmentData = investPlayer.getCurrentInvestment();
 
                 if (getConfig().getBoolean("settings.limit-investment-time") && getConfig().getInt("settings.limit-investment-time-in-second") <= investPlayer.getTimeStayedToday()) {
-                    Tl.sendConfigMessage(player, Tl.REPEATING_MESSAGE_TIME_LIMIT_EXCEED);
+                    Tl.sendConfigMessage(player, Tl.REPEATING$MESSAGE_TIME$LIMIT$EXCEED);
                     return;
                 }
                 investPlayer.setTimeStayed(investPlayer.getTimeStayed() + 1);
@@ -299,16 +309,16 @@ public class Investment extends JavaPlugin {
                 int secondLeft = investmentData.getTimeToStay() - investPlayer.getTimeStayed();
                 int percentage = investPlayer.getTimeStayed() * 100 / investmentData.getTimeToStay();
 
-                Tl.sendConfigMessage(player, Tl.REPEATING_MESSAGE, "%percentage%", percentage + "", "%progressbar%", getProgressBar(player), "%timeToStay%", investmentData.getTimeToStay() + "", "%reward%", investmentData.getReward() + "", "%toInvest%", investmentData.getToInvest() + "", "%investment%", investmentData.getName(), "%seconds%", TimeUtils.secondsFromSeconds(secondLeft) + "", "%minutes%", TimeUtils.minutesFromSeconds(secondLeft) + "", "%hours%", TimeUtils.hoursFromSeconds(secondLeft) + "");
+                Tl.sendConfigMessage(player, Tl.REPEATING$MESSAGE_INVESTMENT, "%percentage%", percentage + "", "%progressbar%", getProgressBar(player), "%timeToStay%", investmentData.getTimeToStay() + "", "%reward%", investmentData.getReward() + "", "%toInvest%", investmentData.getToInvest() + "", "%investment%", investmentData.getName(), "%seconds%", TimeUtils.secondsFromSeconds(secondLeft) + "", "%minutes%", TimeUtils.minutesFromSeconds(secondLeft) + "", "%hours%", TimeUtils.hoursFromSeconds(secondLeft) + "");
                 if (secondLeft == 0) {
-                    investPlayer.finishInvestment();
+                    investPlayer.finishCurrentInvestment();
                 }
             } else {
-                Tl.sendConfigMessage(player, Tl.REPEATING_MESSAGE_NOINVESTMENT);
+                Tl.sendConfigMessage(player, Tl.REPEATING$MESSAGE_NOINVESTMENT);
             }
         } else {
             if (entered.contains(player)) {
-                Tl.sendConfigMessage(player, Tl.ON_LEAVE_INVESTMENT);
+                Tl.sendConfigMessage(player, Tl.INVESTMENT_ON$LEAVE$ZONE);
                 entered.remove(player);
                 if (vanishManager != null && Investment.getInstance().getConfig().getBoolean("settings.vanish")) {
                     for (Player pls : Bukkit.getOnlinePlayers()) {
@@ -348,27 +358,27 @@ public class Investment extends JavaPlugin {
             InvestPlayer investPlayer = InvestPlayer.wrap(player);
             if (args.length == 0) {
                 if (!player.hasPermission("investment.command.open-gui") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                    Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                    Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                     return true;
                 }
                 if (investPlayer.hasInvestment()) {
-                    Tl.sendConfigMessage(player, Tl.ALREADY_INVESTED, "%investment%", investPlayer.getCurrentInvestment().getName());
+                    Tl.sendConfigMessage(player, Tl.COMMAND_ALREADY$INVESTED, "%investment%", investPlayer.getCurrentInvestment().getName());
                     return true;
                 }
                 if (getConfig().getString("settings.investment-zone").equalsIgnoreCase("world:0:0:0;world:0:0:0")) {
-                    Tl.sendConfigMessage(player, Tl.NONE_ZONE_DEFINED);
+                    Tl.sendConfigMessage(player, Tl.COMMAND_NONE$ZONE$DEFINED);
                     return true;
                 }
                 player.openInventory(getInvestmentGuiConfig().getInventory());
-                Tl.sendConfigMessage(player, Tl.OPEN_GUI);
+                Tl.sendConfigMessage(player, Tl.COMMAND_OPEN$GUI);
             } else {
                 if (args[0].equalsIgnoreCase("create")) {
                     if (!player.hasPermission("investment.command.create") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
-                    if (args.length != 5) {
-                        Tl.sendConfigMessage(player, Tl.INVALID_ARGUMENTS);
+                    if (args.length != 6) {
+                        Tl.sendConfigMessage(player, Tl.COMMAND_INVALID$ARGUMENTS);
                         return true;
                     }
                     String name = args[1];
@@ -376,62 +386,63 @@ public class Investment extends JavaPlugin {
                     String toInvest = args[3];
                     String reward = args[4];
                     if (!isNumber(timeToStay)) {
-                        Tl.sendConfigMessage(player, Tl.NOT_A_NUMBER, "%args%", args[2]);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NOT$A$NUMBER, "%args%", args[2]);
                         return true;
                     } else if (!isNumber(toInvest)) {
-                        Tl.sendConfigMessage(player, Tl.NOT_A_NUMBER, "%args%", args[3]);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NOT$A$NUMBER, "%args%", args[3]);
                         return true;
                     } else if (!isNumber(reward)) {
-                        Tl.sendConfigMessage(player, Tl.NOT_A_NUMBER, "%args%", args[4]);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NOT$A$NUMBER, "%args%", args[4]);
                         return true;
                     }
                     InvestmentData investment = InvestmentData.getInvestmentDataByName(name);
                     if (investment != null) {
-                        Tl.sendConfigMessage(player, Tl.ALREADY_EXIST_INVESTMENT, "%timeToStay%", investment.getTimeToStay() +  "", "%reward%", investment.getReward() + ""
-                        , "%toInvest%", investment.getToInvest() + "", "%investment%", investment.getName());
+                        Tl.sendConfigMessage(player, Tl.COMMAND_ALREADY$EXIST$INVESTMENT, "%timeToStay%", investment.getTimeToStay() + "", "%reward%", investment.getReward() + ""
+                                , "%toInvest%", investment.getToInvest() + "", "%investment%", investment.getName());
                         return true;
                     }
-                    InvestmentData.createInvestment(name, Integer.parseInt(timeToStay), Integer.parseInt(toInvest), Integer.parseInt(reward));
-                    Tl.sendConfigMessage(player, Tl.CREATED_INVESTMENT, "%timeToStay%", timeToStay +  "", "%reward%", reward + ""
+                    String type = args[5];
+                    InvestmentData.createInvestment(name, Integer.parseInt(timeToStay), Integer.parseInt(toInvest), Integer.parseInt(reward), type.equalsIgnoreCase("Experience") ? InvestmentType.EXPERIENCE : InvestmentType.MONEY, Collections.emptyList());
+                    Tl.sendConfigMessage(player, Tl.COMMAND_CREATE$INVESTMENT, "%timeToStay%", timeToStay + "", "%reward%", reward + ""
                             , "%toInvest%", toInvest + "", "%investment%", name);
                 } else if (args[0].equalsIgnoreCase("delete")) {
                     if (!player.hasPermission("investment.command.delete") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
                     if (args.length != 2) {
-                        Tl.sendConfigMessage(player, Tl.INVALID_ARGUMENTS);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_INVALID$ARGUMENTS);
                         return true;
                     }
                     String name = args[1];
                     InvestmentData investment = InvestmentData.getInvestmentDataByName(name);
                     if (investment == null) {
-                        Tl.sendConfigMessage(player, Tl.NOT_EXIST_INESTMENT, "%args%", name);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NOT$EXIST$INVESTMENT, "%args%", name);
                         return true;
                     }
-                    Tl.sendConfigMessage(player, Tl.DELETED_INVESTMENT, "%timeToStay%", investment.getTimeToStay() +  "", "%reward%", investment.getReward() + ""
+                    Tl.sendConfigMessage(player, Tl.COMMAND_DELETE$INVESTMENT, "%timeToStay%", investment.getTimeToStay() + "", "%reward%", investment.getReward() + ""
                             , "%toInvest%", investment.getToInvest() + "", "%investment%", investment.getName());
                     InvestmentData.deleteInvestment(investment);
                 } else if (args[0].equalsIgnoreCase("help")) {
-                    sendHelpMessage(player);
+                    Tl.sendHelpMessage(player);
                 } else if (args[0].equalsIgnoreCase("players")) {
                     if (!player.hasPermission("investment.command.players") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
                     if (args.length == 1) {
-                        Tl.sendConfigMessage(player, Tl.PLAYERS_IN_AREA, "%size%", entered.size() + "");
+                        Tl.sendConfigMessage(player, Tl.COMMAND_PLAYERS$IN$AREA, "%size%", entered.size() + "");
                     } else {
                         String target = args[1];
                         if (Bukkit.getPlayer(target) == null) {
-                            Tl.sendConfigMessage(player, Tl.NOTCONNECTED);
+                            Tl.sendConfigMessage(player, Tl.COMMAND_NOT$CONNECTED);
                             return true;
                         }
                         InvestPlayer investTarget = InvestPlayer.wrap(Bukkit.getPlayer(target));
                         if (investTarget.hasInvestment()) {
-                            Tl.sendConfigMessage(player, Tl.PLAYER_IN_AREA_INFO, "%investment%", investTarget.getCurrentInvestment().getName(), "%target%", target);
+                            Tl.sendConfigMessage(player, Tl.COMMAND_PLAYER$IN$AREA$INFO, "%investment%", investTarget.getCurrentInvestment().getName(), "%target%", target);
                         } else {
-                            Tl.sendConfigMessage(player, Tl.PLAYER_IN_AREA_INFO_NONE, "%target%", target);
+                            Tl.sendConfigMessage(player, Tl.COMMAND_PLAYER$IN$AREA$INFO$NONE, "%target%", target);
                         }
                     }
                 } else if (args[0].equalsIgnoreCase("credits")) {
@@ -444,29 +455,28 @@ public class Investment extends JavaPlugin {
                     player.sendMessage(ChatColor.GOLD + "" + ChatColor.STRIKETHROUGH + "------------------------------");
                 } else if (args[0].equalsIgnoreCase("stop")) {
                     if (!player.hasPermission("investment.command.stop") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
                     if (!getConfig().getBoolean("settings.refund-enable")) {
-                        Tl.sendConfigMessage(player, Tl.REFUNDS_DISABLE);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_REFUNDS$DISABLE);
                         return true;
                     }
                     if (!investPlayer.hasInvestment()) {
-                        Tl.sendConfigMessage(player, Tl.NOT_INVESTED);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NOT$INVESTED);
                         return true;
                     }
                     InvestmentData investment = investPlayer.getCurrentInvestment();
                     long refund = (long) ((investment.getToInvest() / 100) * getConfig().getDouble("settings.refund-percentage"));
                     boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
-                    econ.depositPlayer(player, refund);
+                    investment.deposit(player, refund);
 
-                    Tl.sendConfigMessage(player, Tl.ABANDON_INVESTMENT, "%refund%", moneyFormat ? MoneyFormat.format(refund) + "" : refund + "", "%timeToStay%", investment.getTimeToStay() + "", "%reward%", moneyFormat ? MoneyFormat.format(investment.getReward()) + "" : investment.getReward() + "", "%toInvest%", moneyFormat ? MoneyFormat.format(investment.getToInvest()) + "" : investment.getToInvest() + "", "%investment%", investment.getName());
-                    investPlayer.setInvestmentData(null);
-                    investPlayer.setTimeStayed(0);
+                    Tl.sendConfigMessage(player, investment.getInvestmentType() == InvestmentType.MONEY ? Tl.COMMAND_ABANDON$INVESTMENT_MONEY : Tl.COMMAND_ABANDON$INVESTMENT_EXPERIENCE, "%refund%", moneyFormat ? CurrencyFormat.format(refund) + "" : refund + "", "%timeToStay%", investment.getTimeToStay() + "", "%reward%", moneyFormat ? CurrencyFormat.format(investment.getReward()) + "" : investment.getReward() + "", "%toInvest%", moneyFormat ? CurrencyFormat.format(investment.getToInvest()) + "" : investment.getToInvest() + "", "%investment%", investment.getName());
+                    investPlayer.resetInvestment();
                     getDatabaseSQL().removeInvestment(player);
                 } else if (args[0].equalsIgnoreCase("reload")) {
                     if (!player.hasPermission("investment.command.reload") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
                     getInvestmentConfig().setup();
@@ -474,7 +484,7 @@ public class Investment extends JavaPlugin {
                     getInvestmentGuiConfig().setup();
                     getMessagesConfig().setup();
                     reloadConfig();
-                    prefix = ChatColor.translateAlternateColorCodes('&', getMessagesConfig().get().getString(Tl.PREFIX.toString()));
+                    prefix = ChatColor.translateAlternateColorCodes('&', getMessagesConfig().get().getString(Tl.GENERAL_PREFIX.toString()));
                     if (vanishManager != null) {
                         vanishManager.close();
                         vanishManager = null;
@@ -482,24 +492,24 @@ public class Investment extends JavaPlugin {
                     if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib") && Investment.getInstance().getConfig().getBoolean("settings.vanish")) {
                         this.vanishManager = new VanishManager(this, VanishManager.Policy.BLACKLIST);
                     }
-                    Tl.sendConfigMessage(player, Tl.CONFIG_RELOADED);
+                    Tl.sendConfigMessage(player, Tl.COMMAND_CONFIG$RELOADED);
                 } else if (args[0].equalsIgnoreCase("setzone")) {
                     if (!player.hasPermission("investment.command.setzone") && !player.hasPermission("investment.admin") && !player.hasPermission("investment.*") && !player.hasPermission("investment.command.*")) {
-                        Tl.sendConfigMessage(player, Tl.NO_PERMISSION);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_NO$PERMISSION);
                         return true;
                     }
 
                     Location mini = worldEditSelection.getMinimumPoint(player);
                     Location max = worldEditSelection.getMaximumPoint(player);
                     if (mini == null || max == null) {
-                        Tl.sendConfigMessage(player, Tl.SELECTION_NOT_EXISTS);
+                        Tl.sendConfigMessage(player, Tl.COMMAND_SELECTION$NOT$EXISTS);
                         return true;
                     }
-                    Tl.sendConfigMessage(player, Tl.INVESTMENT_SET_ZONE);
-                    getConfig().set("settings.investment-zone", serializeLocation(mini) + ";" + serializeLocation(max));
+                    Tl.sendConfigMessage(player, Tl.COMMAND_INVESTMENT$SET$ZONE);
+                    getConfig().set("settings.investment-zone", SerializationUtils.serializeLocation(mini) + ";" + SerializationUtils.serializeLocation(max));
                     saveConfig();
                 } else {
-                    sendHelpMessage(player);
+                    Tl.sendHelpMessage(player);
                 }
             }
         } else {
@@ -538,11 +548,11 @@ public class Investment extends JavaPlugin {
         return sb.toString();
     }
 
-    public void sendHelpMessage(Player player) {
-        if (player.hasPermission("investment.admin")) {
-            Tl.sendConfigMessage(player, Tl.HELP_MESSAGE_ADMIN);
-        } else {
-            Tl.sendConfigMessage(player, Tl.HELP_MESSAGE);
-        }
+    public static OfflinePlayer getPlayer(final String playerName) {
+        return Bukkit.getOfflinePlayer(playerName);
+    }
+
+    public static OfflinePlayer getPlayer(final UUID playerID) {
+        return Bukkit.getOfflinePlayer(playerID);
     }
 }
