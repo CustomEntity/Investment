@@ -35,9 +35,10 @@ public class Database {
                 + "investment varchar(255),"
                 + "timeStayed int(11),"
                 + "timeStayedToday int(11)"
+                + "lastLocation varchar(255)"
                 + ")";
         String timeStayedColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS timeStayedToday int(11) DEFAULT 0";
-        String lastLocationColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS lastLocation varchar(255) DEFAULT none";
+        String lastLocationColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS lastLocation varchar(255) DEFAULT 'none'";
 
         Statement stmt = null;
         try {

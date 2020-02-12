@@ -41,6 +41,7 @@ dependencies {
     compile(project(':WorldEdit_7_0_0_Beta1')) { transitive = false }
     compile(project(':WorldEdit_7_0_0_Beta5')) { transitive = false }
     compile(project(':WorldEdit_7_0_0')) { transitive = false }
+    compile(project(':WorldEdit_7_1_0')) { transitive = false }
 }
 // implementation
 

@@ -3,6 +3,8 @@ package fr.customentity.investment.hooks;
 import fr.customentity.investment.Investment;
 import org.bukkit.Bukkit;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 /**
@@ -10,7 +12,7 @@ import java.util.logging.Level;
  */
 public class HooksManager {
 
-    private Hook currentaAfkHook;
+    private List<Hook> hookList = new ArrayList<>();
 
     public void setupHooks() {
         setupAfkHook();
@@ -18,15 +20,21 @@ public class HooksManager {
 
     private void setupAfkHook() {
         if (Bukkit.getPluginManager().isPluginEnabled("AntiAFKPlus")) {
-            currentaAfkHook = new AntiAfkPlusHook();
-            currentaAfkHook.setup();
+            AntiAfkPlusHook antiAfkPlusHook = new AntiAfkPlusHook();
+            hookList.add(antiAfkPlusHook);
+            antiAfkPlusHook.setup();
             Bukkit.getPluginManager().registerEvents(new AntiAfkPlusHook(), Investment.getInstance());
             Investment.getInstance().getLogger().log(Level.INFO, "AntiAFKPlus hooked !");
         } else if (Bukkit.getPluginManager().isPluginEnabled("Essentials")) {
-            currentaAfkHook = new EssentialHook();
-            currentaAfkHook.setup();
+            EssentialHook essentialHook = new EssentialHook();
+            hookList.add(essentialHook);
+            essentialHook.setup();
             Bukkit.getPluginManager().registerEvents(new EssentialHook(), Investment.getInstance());
             Investment.getInstance().getLogger().log(Level.INFO, "Essentials hooked !");
         }
+    }
+
+    public List<Hook> getHooks() {
+        return hookList;
     }
 }

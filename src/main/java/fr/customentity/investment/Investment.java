@@ -8,13 +8,7 @@ import fr.customentity.investment.data.InvestmentData;
 import fr.customentity.investment.data.InvestmentType;
 import fr.customentity.investment.exceptions.WorldDoesntExistException;
 import fr.customentity.investment.hook.WorldEditSelection;
-import fr.customentity.investment.hook.all.WorldEdit_6_1_9;
-import fr.customentity.investment.hook.all.WorldEdit_7;
-import fr.customentity.investment.hook.all.WorldEdit_7Beta1;
-import fr.customentity.investment.hook.all.WorldEdit_7Beta5;
-import fr.customentity.investment.hooks.AntiAfkPlusHook;
-import fr.customentity.investment.hooks.EssentialHook;
-import fr.customentity.investment.hooks.Hook;
+import fr.customentity.investment.hook.all.*;
 import fr.customentity.investment.hooks.HooksManager;
 import fr.customentity.investment.listeners.InvestmentListener;
 import fr.customentity.investment.schedulers.DailyTask;
@@ -24,7 +18,6 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -82,7 +75,6 @@ public class Investment extends JavaPlugin {
         getLogger().log(Level.INFO, "Checking AntiAfk integration...");
 
 
-
         this.sendPluginEnableMessage();
         Bukkit.getPluginManager().registerEvents(new InvestmentListener(), this);
 
@@ -137,9 +129,7 @@ public class Investment extends JavaPlugin {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Bukkit.getOnlinePlayers().forEach(pls -> {
-                    handleMove(pls, pls.getLocation());
-                });
+                Bukkit.getOnlinePlayers().forEach(pls -> handleMove(pls, pls.getLocation()));
             }
         }, "Invest Main Thread");
         thread.start();
@@ -241,8 +231,8 @@ public class Investment extends JavaPlugin {
     private boolean setupWorldEdit() {
         worldEditPlugin = (JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WorldEdit");
         String version = worldEditPlugin.getDescription().getVersion().split(";")[0];
-        int majorVersion = Integer.parseInt(version.split(".")[0]);
-
+        int majorVersion = Integer.parseInt(version.split("\\.")[0]);
+        int secondaryVersion = Integer.parseInt(version.split("\\.")[1]);
         if (worldEditPlugin == null) return false;
         if (majorVersion == 7) {
             if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-05")) {
@@ -252,6 +242,8 @@ public class Investment extends JavaPlugin {
             } else {
                 worldEditSelection = new WorldEdit_7(worldEditPlugin);
             }
+        } else if (secondaryVersion == 1) {
+            worldEditSelection = new WorldEdit_7_1_0(worldEditPlugin);
         } else {
             worldEditSelection = new WorldEdit_6_1_9(worldEditPlugin);
         }
@@ -330,6 +322,13 @@ public class Investment extends JavaPlugin {
                             });
                         }
                     }
+                }
+                if (!getConfig().getBoolean("settings.afk.teleport-back-location")) {
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        if (investPlayer.getOriginalLocation() != null) {
+                            player.teleport(investPlayer.getOriginalLocation());
+                        }
+                    });
                 }
             }
         }
@@ -546,13 +545,5 @@ public class Investment extends JavaPlugin {
             }
         }
         return sb.toString();
-    }
-
-    public static OfflinePlayer getPlayer(final String playerName) {
-        return Bukkit.getOfflinePlayer(playerName);
-    }
-
-    public static OfflinePlayer getPlayer(final UUID playerID) {
-        return Bukkit.getOfflinePlayer(playerID);
     }
 }

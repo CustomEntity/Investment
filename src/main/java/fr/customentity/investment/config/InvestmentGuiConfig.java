@@ -4,6 +4,7 @@ import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestmentData;
 import fr.customentity.investment.utils.CurrencyFormat;
 import fr.customentity.investment.utils.XMaterial;
+import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -57,7 +58,18 @@ public class InvestmentGuiConfig {
     }
 
     public ItemStack getItemConfig(String path) {
-        if(!get().contains(path + ".id") && !get().contains(path + ".data"))return null;
+        if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+            if (get().contains(path + ".head-database-id")) {
+                int id = get().getInt(path + ".head-database-id");
+                HeadDatabaseAPI api = new HeadDatabaseAPI();
+                try {
+                    return api.getItemHead(id + "");
+                } catch (NullPointerException nullpointer) {
+                    Investment.getInstance().getLogger().severe("Could not find the head you were looking for");
+                }
+            }
+        }
+        if (!get().contains(path + ".id") && !get().contains(path + ".data")) return null;
         if (get().contains(path + ".id")) {
             Investment.getInstance().getLogger().log(Level.WARNING, "Please replace 'id' to 'type' in the gui.yml. Example: id:399 to type:NETHER_STAR");
             return new ItemStack(Material.STONE);
@@ -67,10 +79,10 @@ public class InvestmentGuiConfig {
             data = getConfig().getInt(path + ".data");
         }
         XMaterial xMaterial;
-        if(data == 0) {
+        if (data == 0) {
             xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"));
         } else {
-            xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"), (byte)data);
+            xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"), (byte) data);
         }
         if (xMaterial == null) {
             return new ItemStack(Material.STONE);
@@ -96,7 +108,7 @@ public class InvestmentGuiConfig {
 
         ItemStack idle = getItemConfig("items.idle-items");
 
-        if(idle == null) {
+        if (idle == null) {
             if (get().getConfigurationSection("items.idle-items") != null && get().getConfigurationSection("items.idle-items").getKeys(false).size() != 0) {
                 for (String str : get().getConfigurationSection("items.idle-items").getKeys(false)) {
                     ItemStack it = getItemConfig("items.idle-items." + str);
@@ -106,7 +118,7 @@ public class InvestmentGuiConfig {
                 }
             }
         } else {
-            for(String slot : get().getStringList("items.idle-items.idle-items-slots")) {
+            for (String slot : get().getStringList("items.idle-items.idle-items-slots")) {
                 inventory.setItem(Integer.parseInt(slot), idle);
             }
         }
@@ -120,13 +132,13 @@ public class InvestmentGuiConfig {
         if (get().getConfigurationSection("items.investments-items").getKeys(false).size() != 0) {
             for (String investments : get().getConfigurationSection("items.investments-items").getKeys(false)) {
                 InvestmentData investmentData = InvestmentData.getInvestmentDataByName(investments);
-                if(investmentData == null)continue;
+                if (investmentData == null) continue;
                 boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
                 ItemStack it = getItemConfig("items.investments-items." + investments);
                 ItemMeta im = it.getItemMeta();
-                im.setDisplayName(im.getDisplayName().replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + ""));
+                im.setDisplayName(im.getDisplayName().replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "" : investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "" : investmentData.getToInvest() + ""));
                 List<String> translatedLore = new ArrayList<>();
-                im.getLore().forEach(s -> translatedLore.add(s.replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "": investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "": investmentData.getToInvest() + "")));
+                im.getLore().forEach(s -> translatedLore.add(s.replace("%type%", investmentData.getInvestmentType().getName()).replace("%reward%", moneyFormat ? CurrencyFormat.format(investmentData.getReward()) + "" : investmentData.getReward() + "").replace("%toInvest%", moneyFormat ? CurrencyFormat.format(investmentData.getToInvest()) + "" : investmentData.getToInvest() + "")));
                 im.setLore(translatedLore);
                 it.setItemMeta(im);
                 inventory.setItem(get().getInt("items.investments-items." + investments + ".slot"), it);

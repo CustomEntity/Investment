@@ -82,6 +82,7 @@ public class InvestmentConfig {
             get().set("investments." + investmentData.getName() + ".toInvest", investmentData.getToInvest());
             get().set("investments." + investmentData.getName() + ".reward", investmentData.getReward());
             get().set("investments." + investmentData.getName() + ".executed-commands", investmentData.getCommandsToExecute());
+            get().set("investments." + investmentData.getName() + ".type", investmentData.getInvestmentType().getName());
         }
         save();
     }

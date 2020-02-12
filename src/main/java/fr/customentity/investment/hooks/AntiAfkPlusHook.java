@@ -22,6 +22,7 @@ public class AntiAfkPlusHook implements Hook, Listener {
 
     @Override
     public void setup() {
+
     }
 
     @EventHandler

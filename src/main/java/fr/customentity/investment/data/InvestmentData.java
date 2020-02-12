@@ -75,9 +75,9 @@ public class InvestmentData {
 
     public void deposit(Player player) {
         if(investmentType == InvestmentType.MONEY) {
-            Investment.getInstance().getEcon().depositPlayer(player, this.toInvest);
+            Investment.getInstance().getEcon().depositPlayer(player, this.reward);
         } else {
-            player.setTotalExperience((int) (player.getTotalExperience() + this.toInvest));
+            player.setTotalExperience((int) (player.getTotalExperience() + this.reward));
         }
     }
 
@@ -92,23 +92,23 @@ public class InvestmentData {
 
     public void startInvestment(InvestPlayer investPlayer) {
         Player player = investPlayer.getPlayer();
-        boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
+        boolean currencyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
         if (hasEnough(player)) {
             withdraw(player);
             investPlayer.setInvestmentData(this);
             investPlayer.setTimeStayed(0);
-            Tl.sendConfigMessage(investPlayer.getPlayer(), getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_ON$INVEST_MONEY : Tl.INVESTMENT_ON$INVEST_EXPERIENCE, "%reward%", moneyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", moneyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
+            Tl.sendConfigMessage(investPlayer.getPlayer(), getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_ON$INVEST_MONEY : Tl.INVESTMENT_ON$INVEST_EXPERIENCE, "%reward%", currencyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", currencyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
             Investment.getInstance().getDatabaseSQL().setInvestment(player, this);
         } else {
-            Tl.sendConfigMessage(player, getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_NO$ENOUGH_MONEY : Tl.INVESTMENT_NO$ENOUGH_EXPERIENCE, "%reward%", moneyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", moneyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
+            Tl.sendConfigMessage(player, getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_NO$ENOUGH_MONEY : Tl.INVESTMENT_NO$ENOUGH_EXPERIENCE, "%reward%", currencyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", currencyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
         }
     }
 
     public void finishInvestment(InvestPlayer investPlayer) {
         Player player = investPlayer.getPlayer();
         deposit(player);
-        boolean moneyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
-        Tl.sendConfigMessage(player, getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_ON$FINISH_MONEY : Tl.INVESTMENT_ON$FINISH_EXPERIENCE, "%reward%", moneyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", moneyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
+        boolean currencyFormat = Investment.getInstance().getConfig().getBoolean("settings.money-formatted", false);
+        Tl.sendConfigMessage(player, getInvestmentType() == InvestmentType.MONEY ? Tl.INVESTMENT_ON$FINISH_MONEY : Tl.INVESTMENT_ON$FINISH_EXPERIENCE, "%reward%", currencyFormat ? CurrencyFormat.format(this.reward) + "" : this.reward + "", "%invested%", currencyFormat ? CurrencyFormat.format(this.toInvest) + "" : this.toInvest + "", "%investment%", this.name);
         Investment.getInstance().getDatabaseSQL().removeInvestment(player);
         Bukkit.getScheduler().runTask(Investment.getInstance(), () -> {
             if (Investment.getInstance().getConfig().contains("settings.commands-when-player-finish-investment")) {
@@ -156,6 +156,7 @@ public class InvestmentData {
         Investment.getInstance().getInvestmentConfig().get().set("investments." + name + ".toInvest", toInvest);
         Investment.getInstance().getInvestmentConfig().get().set("investments." + name + ".reward", reward);
         Investment.getInstance().getInvestmentConfig().get().set("investments." + name + ".commandsToExecute", commandsToExecute);
+        Investment.getInstance().getInvestmentConfig().get().set("investments." + name + ".type", investmentType.getName());
 
         Investment.getInstance().getInvestmentConfig().save();
     }
