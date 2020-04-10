@@ -38,6 +38,13 @@ public class InvestmentConfig {
             investmentConfig.set("investments.investment1.reward", 25000);
             investmentConfig.set("investments.investment1.type", "Money");
             investmentConfig.set("investments.investment1.executed-commands", Arrays.asList("give %player% diamond 1"));
+
+            investmentConfig.createSection("investments.investment2");
+            investmentConfig.set("investments.investment2.timeToStay", 1800);
+            investmentConfig.set("investments.investment2.toInvest", 500);
+            investmentConfig.set("investments.investment2.reward", 1000);
+            investmentConfig.set("investments.investment2.type", "Experience");
+            investmentConfig.set("investments.investment2.executed-commands", Arrays.asList("give %player% diamond 1"));
         }
         save();
     }
@@ -54,6 +61,7 @@ public class InvestmentConfig {
     }
 
     public void reload() {
+        save();
         investmentConfig = YamlConfiguration.loadConfiguration(investmentFile);
 
         InvestmentData.investmentDataList.clear();

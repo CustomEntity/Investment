@@ -2,6 +2,7 @@ package fr.customentity.investment.schedulers;
 
 import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestPlayer;
+import me.clip.placeholderapi.PlaceholderAPI;
 
 import java.util.TimerTask;
 

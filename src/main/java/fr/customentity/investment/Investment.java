@@ -6,7 +6,6 @@ import fr.customentity.investment.config.MessagesConfig;
 import fr.customentity.investment.data.InvestPlayer;
 import fr.customentity.investment.data.InvestmentData;
 import fr.customentity.investment.data.InvestmentType;
-import fr.customentity.investment.exceptions.WorldDoesntExistException;
 import fr.customentity.investment.hook.WorldEditSelection;
 import fr.customentity.investment.hook.all.*;
 import fr.customentity.investment.hooks.HooksManager;
@@ -23,6 +22,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -141,12 +141,7 @@ public class Investment extends JavaPlugin {
 
     public Cuboid getInvestmentZone() {
         String investmentZoneConfig = getConfig().getString("settings.investment-zone");
-        try {
-            return new Cuboid(SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[0]), SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[1]));
-        } catch (WorldDoesntExistException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return new Cuboid(SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[0]), SerializationUtils.deserializeLocation(investmentZoneConfig.split(";")[1]));
     }
 
     public JavaPlugin getWorldEditPlugin() {
@@ -230,28 +225,31 @@ public class Investment extends JavaPlugin {
 
     private boolean setupWorldEdit() {
         worldEditPlugin = (JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WorldEdit");
+        if (worldEditPlugin == null) return false;
         String version = worldEditPlugin.getDescription().getVersion().split(";")[0];
+        if (version.contains("-")) version = version.split("-")[0];
+        if (version.contains("1.15")) {
+            worldEditSelection = new WorldEdit_7_1_0(worldEditPlugin);
+            return true;
+        }
         int majorVersion = Integer.parseInt(version.split("\\.")[0]);
         int secondaryVersion = Integer.parseInt(version.split("\\.")[1]);
-        if (worldEditPlugin == null) return false;
-        if (majorVersion == 7) {
-            if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-05")) {
-                worldEditSelection = new WorldEdit_7Beta5(worldEditPlugin);
-            } else if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-01")) {
-                worldEditSelection = new WorldEdit_7Beta1(worldEditPlugin);
-            } else {
-                worldEditSelection = new WorldEdit_7(worldEditPlugin);
-            }
-        } else if (secondaryVersion == 1) {
-            worldEditSelection = new WorldEdit_7_1_0(worldEditPlugin);
-        } else {
-            worldEditSelection = new WorldEdit_6_1_9(worldEditPlugin);
-        }
 
+        if (majorVersion == 7) {
+            if (secondaryVersion != 1) {
+                if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-05")) {
+                    worldEditSelection = new WorldEdit_7Beta5(worldEditPlugin);
+                } else if (worldEditPlugin.getDescription().getVersion().contains("7.0.0-beta-01")) {
+                    worldEditSelection = new WorldEdit_7Beta1(worldEditPlugin);
+                } else {
+                    worldEditSelection = new WorldEdit_7(worldEditPlugin);
+                }
+
+            }
+        } else worldEditSelection = new WorldEdit_6_1_9(worldEditPlugin);
 
         return true;
     }
-
 
     private boolean isNumber(String str) {
         try {
@@ -303,7 +301,7 @@ public class Investment extends JavaPlugin {
 
                 Tl.sendConfigMessage(player, Tl.REPEATING$MESSAGE_INVESTMENT, "%percentage%", percentage + "", "%progressbar%", getProgressBar(player), "%timeToStay%", investmentData.getTimeToStay() + "", "%reward%", investmentData.getReward() + "", "%toInvest%", investmentData.getToInvest() + "", "%investment%", investmentData.getName(), "%seconds%", TimeUtils.secondsFromSeconds(secondLeft) + "", "%minutes%", TimeUtils.minutesFromSeconds(secondLeft) + "", "%hours%", TimeUtils.hoursFromSeconds(secondLeft) + "");
                 if (secondLeft == 0) {
-                    investPlayer.finishCurrentInvestment();
+                    Bukkit.getScheduler().runTask(this, investPlayer::finishCurrentInvestment);
                 }
             } else {
                 Tl.sendConfigMessage(player, Tl.REPEATING$MESSAGE_NOINVESTMENT);
@@ -323,7 +321,7 @@ public class Investment extends JavaPlugin {
                         }
                     }
                 }
-                if (!getConfig().getBoolean("settings.afk.teleport-back-location")) {
+                if (getConfig().getBoolean("settings.afk.teleport-back-location")) {
                     Bukkit.getScheduler().runTask(this, () -> {
                         if (investPlayer.getOriginalLocation() != null) {
                             player.teleport(investPlayer.getOriginalLocation());

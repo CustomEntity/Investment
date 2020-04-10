@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 
 public class InvestmentGuiConfig {
@@ -58,17 +59,8 @@ public class InvestmentGuiConfig {
     }
 
     public ItemStack getItemConfig(String path) {
-        if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
-            if (get().contains(path + ".head-database-id")) {
-                int id = get().getInt(path + ".head-database-id");
-                HeadDatabaseAPI api = new HeadDatabaseAPI();
-                try {
-                    return api.getItemHead(id + "");
-                } catch (NullPointerException nullpointer) {
-                    Investment.getInstance().getLogger().severe("Could not find the head you were looking for");
-                }
-            }
-        }
+        boolean isHead = false;
+        ItemStack itemStack = null;
         if (!get().contains(path + ".id") && !get().contains(path + ".data")) return null;
         if (get().contains(path + ".id")) {
             Investment.getInstance().getLogger().log(Level.WARNING, "Please replace 'id' to 'type' in the gui.yml. Example: id:399 to type:NETHER_STAR");
@@ -78,20 +70,39 @@ public class InvestmentGuiConfig {
         if (getConfig().contains(path + ".data")) {
             data = getConfig().getInt(path + ".data");
         }
-        XMaterial xMaterial;
-        if (data == 0) {
-            xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"));
+
+        if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+            if (get().contains(path + ".head-database-id")) {
+                isHead = true;
+            }
+        }
+
+        if(!isHead) {
+            Optional<XMaterial> xMaterial;
+            if (data == 0) {
+                xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"));
+            } else {
+                xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"), (byte) data);
+            }
+            if (!xMaterial.isPresent()) {
+                return new ItemStack(Material.STONE);
+            }
+            itemStack = xMaterial.get().parseItem();
         } else {
-            xMaterial = XMaterial.matchXMaterial(getConfig().getString(path + ".type"), (byte) data);
+            try {
+                int id = get().getInt(path + ".head-database-id");
+                HeadDatabaseAPI api = new HeadDatabaseAPI();
+                itemStack = api.getItemHead(id + "");
+            } catch (NullPointerException nullpointer) {
+                Investment.getInstance().getLogger().severe("Could not find the head you were looking for");
+            }
         }
-        if (xMaterial == null) {
-            return new ItemStack(Material.STONE);
-        }
+
         int amount = 1;
         if (getConfig().contains(path + ".amount")) {
             amount = getConfig().getInt(path + ".amount");
         }
-        ItemStack itemStack = xMaterial.parseItem();
+
         itemStack.setAmount(amount);
         ItemMeta itemMeta = itemStack.getItemMeta();
 

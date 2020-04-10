@@ -3,7 +3,6 @@ package fr.customentity.investment.sql;
 import fr.customentity.investment.Investment;
 import fr.customentity.investment.data.InvestPlayer;
 import fr.customentity.investment.data.InvestmentData;
-import fr.customentity.investment.exceptions.WorldDoesntExistException;
 import fr.customentity.investment.utils.SerializationUtils;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -31,14 +30,15 @@ public class Database {
     }
 
     private void createTable(String table) {
+
         String tableps = "create table IF NOT EXISTS " + table + " (" + "uuid varchar(255),"
                 + "investment varchar(255),"
                 + "timeStayed int(11),"
-                + "timeStayedToday int(11)"
+                + "timeStayedToday int(11),"
                 + "lastLocation varchar(255)"
                 + ")";
-        String timeStayedColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS timeStayedToday int(11) DEFAULT 0";
-        String lastLocationColumn = "ALTER TABLE " + this.table + " ADD COLUMN IF NOT EXISTS lastLocation varchar(255) DEFAULT 'none'";
+        String timeStayedColumn = "ALTER TABLE " + this.table + " ADD timeStayedToday int(11) DEFAULT 0";
+        String lastLocationColumn = "ALTER TABLE " + this.table + " ADD lastLocation varchar(255) DEFAULT 'null'";
 
         Statement stmt = null;
         try {
@@ -48,14 +48,14 @@ public class Database {
             stmt.execute(lastLocationColumn);
             stmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
-    public void setLastLocation(Player player) {
+    public void setLastLocation(InvestPlayer investPlayer) {
         try {
-            PreparedStatement ps = getConnection().prepareStatement("UPDATE " + this.table + " SET lastLocation = ? WHERE " + player.getName());
-            ps.setString(1, SerializationUtils.serializeLocation(player.getLocation()));
+            PreparedStatement ps = getConnection().prepareStatement("UPDATE " + this.table + " SET lastLocation = ? WHERE uuid = ?");
+            ps.setString(1, SerializationUtils.serializeLocation(investPlayer.getOriginalLocation()));
+            ps.setString(2, investPlayer.getPlayer().getUniqueId().toString());
             ps.executeUpdate();
             ps.close();
         } catch (SQLException e) {
@@ -66,13 +66,14 @@ public class Database {
     public Location getLastLocation(Player player) {
         Location location = null;
         try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT lastLocation FROM " + this.table + " WHERE " + player.getName());
+            PreparedStatement ps = getConnection().prepareStatement("SELECT lastLocation FROM " + this.table + " WHERE uuid = ?");
+            ps.setString(1, player.getUniqueId().toString());
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 location = SerializationUtils.deserializeLocation(rs.getString("lastLocation"));
             }
             ps.close();
-        } catch (SQLException | WorldDoesntExistException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return location;
@@ -135,11 +136,12 @@ public class Database {
 
     public void createAccount(Player player) {
         try {
-            PreparedStatement ps = getConnection().prepareStatement("INSERT INTO " + table + "(uuid,investment,timeStayed,timeStayedToday) VALUES (?,?,?,?)");
+            PreparedStatement ps = getConnection().prepareStatement("INSERT INTO " + table + "(uuid,investment,timeStayed,timeStayedToday,lastLocation) VALUES (?,?,?,?,?)");
             ps.setString(1, player.getUniqueId().toString());
             ps.setString(2, "");
             ps.setInt(3, 0);
             ps.setInt(4, 0);
+            ps.setString(5, "null");
             ps.executeUpdate();
             ps.close();
         } catch (SQLException e) {
@@ -180,7 +182,6 @@ public class Database {
                 ResultSet resultSet = ps.executeQuery();
                 if (resultSet.next()) {
                     InvestmentData investmentData = InvestmentData.getInvestmentDataByName(resultSet.getString("investment"));
-
                     if (investmentData != null) {
                         investPlayer.setInvestmentData(investmentData);
                         investPlayer.setTimeStayed(resultSet.getInt("timeStayed"));
@@ -191,11 +192,12 @@ public class Database {
                     }
                 }
                 ps.close();
-            } catch (SQLException | WorldDoesntExistException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
     }
+
 
     public void updateTimeStayed(InvestPlayer investPlayer) {
         Player player = investPlayer.getPlayer();
@@ -224,9 +226,9 @@ public class Database {
     }
 
     public void saveData(InvestPlayer investPlayer) {
-        Player player = investPlayer.getPlayer();
         updateTimeStayed(investPlayer);
         updateTimeStayedToday(investPlayer);
+        setLastLocation(investPlayer);
     }
 
 

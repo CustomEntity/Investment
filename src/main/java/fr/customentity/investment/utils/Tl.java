@@ -120,6 +120,7 @@ public enum Tl {
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             message = PlaceholderAPI.setPlaceholders(player, message);
         }
+
         for (Map.Entry<String, String> stringEntry : replaced.entrySet()) {
             message = message.replace(stringEntry.getKey(), stringEntry.getValue());
         }
