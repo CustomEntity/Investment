@@ -31,3 +31,5 @@
 *.ipr
 *.iws
 .idea/
+
+/libs/AntiAFKPlus-2.18.jar
