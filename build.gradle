@@ -1,9 +1,6 @@
 apply plugin: 'java'
 apply plugin: "com.github.johnrengelman.shadow"
 
-group = pluginGroup
-version = pluginVersion
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -36,26 +33,11 @@ repositories {
 dependencies {
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
     compile fileTree(dir: 'libs/export', include: ['*.jar'])
-    compile(project(':Common')) { transitive = false }
-    compile(project(':WorldEdit_6_1_9')) { transitive = false }
-    compile(project(':WorldEdit_7_0_0_Beta1')) { transitive = false }
-    compile(project(':WorldEdit_7_0_0_Beta5')) { transitive = false }
-    compile(project(':WorldEdit_7_0_0')) { transitive = false }
-    compile(project(':WorldEdit_7_1_0')) { transitive = false }
-}
-// implementation
-
-import org.apache.tools.ant.filters.ReplaceTokens
-
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        filter ReplaceTokens, tokens: [version: version]
-    }
 }
 
 shadowJar {
     archiveName = "Investment.jar"
 }
 
-build.dependsOn(shadowJar)
+tasks.build.dependsOn(shadowJar)
 

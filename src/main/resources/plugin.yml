@@ -1,12 +1,6 @@
 name: Investment
-version: 1.5.2
+version: 2.0
 main: fr.customentity.investment.Investment
-depend: [Vault, WorldEdit]
-softdepend: [ProtocolLib,PlaceholderAPI,Essentials,AntiAFKPlus,HeadDatabase]
 authors: [CustomEntity]
-description: Time is money
-api-version: 1.13
-commands:
-  investment:
-    aliases: [invest]
-    description: Main command for Investment Plugin.
+description: This plugin allows your players to earn money while staying afk in an area.
+api-version: 1.16
