@@ -1,0 +1,25 @@
+storage:
+  type: sqlite
+  hostname: 'localhost'
+  port: 3306
+  username: "root"
+  password: ""
+  database: "MyDatabase"
+  playerstable: "PlayerTable"
+settings:
+  vanish: false
+  investment-zone: "world:0:0:0;world:0:0:0"
+  refund:
+    enable: true
+    refund-percentage: 50.0
+  # -1 to deactivate
+  limit:
+    daily-limit-in-second: -1
+    account-limit: 3
+  format:
+    money-formatted: true
+    progress-bar:
+      size: 50
+      char: "|"
+      progress-color: "&a"
+      remaining-progress-color: "&7"

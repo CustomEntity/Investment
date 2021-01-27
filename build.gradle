@@ -28,6 +28,7 @@ repositories {
     maven {
         url = 'https://oss.sonatype.org/content/repositories/snapshots'
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -35,6 +36,8 @@ dependencies {
     compile fileTree(dir: 'libs/export', include: ['*.jar'])
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-assistedinject:4.1.0'
+    compile 'com.zaxxer:HikariCP:3.4.5'
+    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
 }
 
 shadowJar {
