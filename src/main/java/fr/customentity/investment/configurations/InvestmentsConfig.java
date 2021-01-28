@@ -4,7 +4,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import fr.customentity.investment.InvestmentPlugin;
-import fr.customentity.investment.data.Investment;
+import fr.customentity.investment.data.investments.Investment;
 
 import java.io.File;
 import java.io.IOException;

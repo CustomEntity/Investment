@@ -1,5 +1,6 @@
 package fr.customentity.investment.locale;
 
+import com.google.inject.Inject;
 import fr.customentity.investment.InvestmentPlugin;
 import fr.customentity.investment.utils.ActionBarUtils;
 import fr.customentity.investment.utils.TitleUtils;
@@ -31,19 +32,16 @@ public enum Locale {
     private final List<String> defaultMessage;
     private final String path;
 
-    private final InvestmentPlugin plugin;
+    @Inject private InvestmentPlugin plugin;
 
     Locale(String defaultMessage) {
         this.defaultMessage = Collections.singletonList(defaultMessage);
         this.path = this.name().replace("_", ".").replace("$", "-");
-
-        this.plugin = JavaPlugin.getPlugin(InvestmentPlugin.class);
     }
 
     Locale(List<String> listDefaultMessages) {
         this.defaultMessage = listDefaultMessages;
         this.path = this.name().replace("_", ".").replace("$", "-");
-        this.plugin = JavaPlugin.getPlugin(InvestmentPlugin.class);
     }
 
     public List<String> getMessage() {

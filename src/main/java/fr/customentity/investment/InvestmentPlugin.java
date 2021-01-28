@@ -4,10 +4,10 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import fr.customentity.investment.configurations.InvestmentsConfig;
 import fr.customentity.investment.configurations.MessagesConfig;
+import fr.customentity.investment.data.player.InvestPlayerManager;
 import fr.customentity.investment.gson.GsonManager;
-import fr.customentity.investment.injection.InvestmentModule;
 import fr.customentity.investment.injection.PluginModule;
-import fr.customentity.investment.data.InvestmentsManager;
+import fr.customentity.investment.data.investments.InvestmentsManager;
 import fr.customentity.investment.listeners.ListenerManager;
 import fr.customentity.investment.settings.Settings;
 import fr.customentity.investment.tasks.InvestmentTask;
@@ -22,6 +22,7 @@ public class InvestmentPlugin extends JavaPlugin {
     private @Inject InvestmentsManager investmentsManager;
     private @Inject ListenerManager listenerManager;
     private @Inject GsonManager gsonManager;
+    private @Inject InvestPlayerManager investPlayerManager;
 
     private @Inject Settings settings;
 
@@ -36,7 +37,7 @@ public class InvestmentPlugin extends JavaPlugin {
     public void onEnable() {
         this.saveDefaultConfig();
 
-        Guice.createInjector(new InvestmentModule(), new PluginModule(this));
+        Guice.createInjector(new PluginModule(this));
 
         if(!this.setupEconomy()) {
             this.getLogger().log(Level.WARNING, "Vault provider not found ! Disabling the plugin..");
@@ -59,6 +60,14 @@ public class InvestmentPlugin extends JavaPlugin {
         this.investmentsConfig.saveInvestments();
     }
 
+
+    public InvestmentTask getInvestmentTask() {
+        return investmentTask;
+    }
+
+    public InvestPlayerManager getInvestPlayerManager() {
+        return investPlayerManager;
+    }
 
     public GsonManager getGsonManager() {
         return gsonManager;

@@ -1,4 +1,4 @@
-package fr.customentity.investment.data;
+package fr.customentity.investment.data.investments;
 
 
 import java.util.Set;

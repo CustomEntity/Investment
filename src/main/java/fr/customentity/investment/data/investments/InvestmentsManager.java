@@ -1,4 +1,4 @@
-package fr.customentity.investment.data;
+package fr.customentity.investment.data.investments;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
