@@ -20,7 +20,7 @@ public class Cuboid {
     private final double zMaxCentered;
     private final World world;
 
-    public Cuboid(final Location point1, final Location point2) {
+    public Cuboid(Location point1, Location point2) {
         this.xMin = Math.min(point1.getBlockX(), point2.getBlockX());
         this.xMax = Math.max(point1.getBlockX(), point2.getBlockX());
         this.yMin = Math.min(point1.getBlockY(), point2.getBlockY());
@@ -72,16 +72,16 @@ public class Cuboid {
         return this.zMax - this.zMin + 1;
     }
 
-    public boolean isIn(final Location loc) {
+    public boolean isIn(Location loc) {
         return loc.getWorld() == this.world && loc.getBlockX() >= this.xMin && loc.getBlockX() <= this.xMax && loc.getBlockY() >= this.yMin && loc.getBlockY() <= this.yMax && loc
                 .getBlockZ() >= this.zMin && loc.getBlockZ() <= this.zMax;
     }
 
-    public boolean isIn(final Player player) {
+    public boolean isIn(Player player) {
         return this.isIn(player.getLocation());
     }
 
-    public boolean isInWithMarge(final Location loc, final double marge) {
+    public boolean isInWithMarge(Location loc, double marge) {
         return loc.getWorld() == this.world && loc.getX() >= this.xMinCentered - marge && loc.getX() <= this.xMaxCentered + marge && loc.getY() >= this.yMinCentered - marge && loc
                 .getY() <= this.yMaxCentered + marge && loc.getZ() >= this.zMinCentered - marge && loc.getZ() <= this.zMaxCentered + marge;
     }

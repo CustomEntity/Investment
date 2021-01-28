@@ -29,6 +29,9 @@ repositories {
         url = 'https://oss.sonatype.org/content/repositories/snapshots'
     }
     maven { url 'https://jitpack.io' }
+    maven {
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
 }
 
 dependencies {
@@ -37,7 +40,8 @@ dependencies {
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-assistedinject:4.1.0'
     compile 'com.zaxxer:HikariCP:3.4.5'
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
+    compileOnly 'me.clip:placeholderapi:2.10.9'
 }
 
 shadowJar {

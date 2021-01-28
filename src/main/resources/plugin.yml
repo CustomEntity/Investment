@@ -1,6 +1,8 @@
-name: InvestmentPlugin
+name: Investment
 version: 2.0
 main: fr.customentity.investment.InvestmentPlugin
-authors: [CustomEntity]
+authors: [ CustomEntity ]
+depend: [ Vault ]
+softdepend: [ PlaceholderAPI ]
 description: This plugin allows your players to earn money while staying afk in an area.
 api-version: 1.16
