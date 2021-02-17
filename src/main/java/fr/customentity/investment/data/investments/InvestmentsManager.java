@@ -13,10 +13,13 @@ public class InvestmentsManager {
     private final InvestmentPlugin plugin;
     private Set<Investment> investmentSet;
 
+    private Investment.Factory investmentFactory;
+
     @Inject
-    public InvestmentsManager(InvestmentPlugin plugin) {
+    public InvestmentsManager(InvestmentPlugin plugin, Investment.Factory investmentFactory) {
         this.plugin = plugin;
         this.investmentSet = new HashSet<>();
+        this.investmentFactory = investmentFactory;
     }
 
     public void setInvestmentSet(Set<Investment> investmentSet) {
@@ -25,5 +28,10 @@ public class InvestmentsManager {
 
     public Set<Investment> getInvestmentSet() {
         return investmentSet;
+    }
+
+
+    public void createInvestment(Investment.Type type, String name, double amountToInvest, double reward, int timeToStay) {
+        this.investmentSet.add(investmentFactory.create(type, name, amountToInvest, reward, timeToStay));
     }
 }

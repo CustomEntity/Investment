@@ -9,19 +9,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 
 public enum Locale {
 
-    GENERAL_PREFIX("&d&lNexus &7&l» &f"),
+    GENERAL_PREFIX("&6&lInvestment &7&l» &f"),
 
     GENERAL_HELP$MESSAGE(Arrays.asList(
             "&6&m--&e&m--&6&m--&e&m--&6&m--&e&m--&6&m--&f &e&lINVESTMENT HELP &6&m--&e&m--&6&m--&e&m--&6&m--&e&m--&6&m--",
             " ",
             " &7&l» &f/&einvestment create &6<name> &8- &eCreate a new investment&f.",
-            " &7&l» &f/&einvestment delete &6<nexus> &8- &eDelete an investment&f.",
+            " &7&l» &f/&einvestment delete &6<investment> &8- &eDelete an investment&f.",
             " ",
             "&e&m--&6&m--&e&m--&6&m--&e&m--&6&m--&f &e&lBy CustomEntity &6&m--&e&m--&6&m--&e&m--&6&m--&e&m--"
     )),

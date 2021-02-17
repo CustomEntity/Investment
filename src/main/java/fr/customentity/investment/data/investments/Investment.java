@@ -1,6 +1,11 @@
 package fr.customentity.investment.data.investments;
 
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import fr.customentity.investment.InvestmentPlugin;
+
+import java.util.HashSet;
 import java.util.Set;
 
 public class Investment {
@@ -12,13 +17,22 @@ public class Investment {
     private int timeToStay;
     private Set<String> commandsToExecute;
 
-    public Investment(Type type, String name, double amountToInvest, double reward, int timeToStay, Set<String> commandsToExecute) {
+    private transient InvestmentPlugin plugin;
+
+    @Inject
+    public Investment(InvestmentPlugin plugin,
+                      @Assisted Type type,
+                      @Assisted String name,
+                      @Assisted double amountToInvest,
+                      @Assisted double reward,
+                      @Assisted int timeToStay) {
+        this.plugin = plugin;
         this.type = type;
         this.name = name;
         this.amountToInvest = amountToInvest;
         this.reward = reward;
         this.timeToStay = timeToStay;
-        this.commandsToExecute = commandsToExecute;
+        this.commandsToExecute = new HashSet<>();
     }
 
     public int getTimeToStay() {
@@ -69,8 +83,17 @@ public class Investment {
         this.type = type;
     }
 
-    enum Type {
+    public enum Type {
         EXP,
         MONEY
+    }
+
+    public interface Factory {
+
+        Investment create(Type type,
+                          String name,
+                          double amountToInvest,
+                          double reward,
+                          int timeToStay);
     }
 }

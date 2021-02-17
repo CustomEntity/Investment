@@ -10,6 +10,7 @@ import fr.customentity.investment.injection.PluginModule;
 import fr.customentity.investment.data.investments.InvestmentsManager;
 import fr.customentity.investment.listeners.ListenerManager;
 import fr.customentity.investment.settings.Settings;
+import fr.customentity.investment.storage.StorageManager;
 import fr.customentity.investment.tasks.InvestmentTask;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -30,6 +31,8 @@ public class InvestmentPlugin extends JavaPlugin {
     private @Inject MessagesConfig messagesConfig;
 
     private @Inject InvestmentTask investmentTask;
+    private @Inject StorageManager storageManager;
+
 
     private Economy economy;
 
@@ -50,7 +53,14 @@ public class InvestmentPlugin extends JavaPlugin {
         this.investmentsConfig.setup();
         this.investmentsConfig.loadInvestments();
 
+        Metrics metrics = new Metrics(this);
+        //metrics.addCustomChart(new Metrics.SingleLineChart("total_players_in_investment_zone", () -> entered.size()));
+
         this.messagesConfig.setup();
+
+        this.storageManager.init();
+
+
 
         this.investmentTask.runTaskTimer(this, 20, 20);
     }

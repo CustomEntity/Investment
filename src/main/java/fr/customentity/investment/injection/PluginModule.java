@@ -16,7 +16,7 @@ public class PluginModule extends AbstractModule {
     protected void configure() {
         this.bind(InvestmentPlugin.class).toInstance(this.plugin);
 
-        install(new FactoryModuleBuilder()
+        this.install(new FactoryModuleBuilder()
                 .build(InvestPlayer.InvestPlayerFactory.class));
     }
 }
